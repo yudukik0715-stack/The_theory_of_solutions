@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>解法カード</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    background: #ffffff; color: #1e293b; line-height: 1.7;
+    padding: 20px 16px 48px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  header { text-align: center; padding: 18px 0 8px; }
+  header h1 { font-size: 26px; font-weight: 700; color: #0369a1; letter-spacing: .04em; }
+  header p { font-size: 13px; color: #64748b; margin-top: 4px; }
+  .card-panel {
+    background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 16px;
+    padding: 20px; margin-top: 18px;
+  }
+  .seg { display: flex; gap: 8px; justify-content: center; margin: 6px 0 16px; flex-wrap: wrap; }
+  .seg label {
+    padding: 8px 18px; border-radius: 999px; border: 1px solid #7dd3fc;
+    background: #fff; color: #0369a1; font-size: 14px; cursor: pointer; user-select: none;
+  }
+  .seg input { display: none; }
+  .seg label:has(input:checked) { background: #0284c7; border-color: #0284c7; color: #fff; font-weight: 600; }
+  .btn {
+    display: block; width: 100%; padding: 14px; border: none; border-radius: 12px;
+    background: #0284c7; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+  .btn:hover { background: #0369a1; }
+  .btn:disabled { background: #cbd5e1; cursor: default; }
+  .btn.sub { background: #fff; color: #0284c7; border: 1px solid #7dd3fc; margin-top: 10px; }
+  .btn.sub:hover { background: #e0f2fe; }
+  .stats { text-align: center; font-size: 13px; color: #64748b; margin-top: 14px; }
+  .muted { color: #64748b; font-size: 14px; text-align: center; padding: 12px; }
+
+  /* クイズ */
+  .quiz-top { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+  .timer { font-variant-numeric: tabular-nums; font-size: 15px; color: #0369a1; font-weight: 600; }
+  .timer.over { color: #dc2626; }
+  .qcount { font-size: 13px; color: #64748b; }
+  .dots { display: flex; gap: 6px; justify-content: center; margin: 12px 0 4px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #e2e8f0; }
+  .dot.done { background: #38bdf8; }
+  .dot.now { background: #0284c7; transform: scale(1.25); }
+  .qmeta { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .chip {
+    font-size: 12px; padding: 3px 10px; border-radius: 999px;
+    background: #e0f2fe; color: #0369a1;
+  }
+  .chip-blue { background: #dbeafe; color: #1d4ed8; }
+  .chip-weak { background: #fee2e2; color: #b91c1c; }
+  .qface {
+    font-size: 19px; font-weight: 600; background: #fff; border: 1px solid #e0f2fe;
+    border-left: 5px solid #0284c7; border-radius: 12px; padding: 18px; margin: 8px 0 16px;
+  }
+  .options { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  @media (min-width: 640px) { .options { grid-template-columns: 1fr 1fr; } }
+  .opt {
+    position: relative; text-align: left; padding: 14px 16px; font-size: 15px; line-height: 1.55;
+    background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; color: #1e293b;
+  }
+  .opt:hover { border-color: #7dd3fc; }
+  .opt.sel { border-color: #0284c7; background: #e0f2fe; }
+  .opt.hit { border-color: #16a34a; background: #f0fdf4; }
+  .opt.wrongpick { border-color: #dc2626; background: #fef2f2; }
+  .opt.missed { border-color: #16a34a; border-style: dashed; background: #fff; }
+  .opt .tag {
+    position: absolute; top: -9px; right: 10px; font-size: 11px; font-weight: 700;
+    background: #16a34a; color: #fff; padding: 1px 8px; border-radius: 999px;
+  }
+  .actions { margin-top: 18px; }
+  .feedback { border-radius: 12px; padding: 16px 18px; margin-top: 18px; font-size: 15px; }
+  .feedback.ok { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .feedback.ng { background: #fff7ed; border: 1px solid #fed7aa; }
+  .fb-back { margin-top: 8px; }
+  .fb-core { margin-top: 8px; color: #0369a1; font-size: 14px; }
+  .fb-list { margin-top: 8px; font-size: 13px; color: #475569; }
+
+  /* 結果 */
+  .result-score { font-size: 32px; font-weight: 700; color: #0369a1; text-align: center; margin-top: 10px; }
+  .result-time { text-align: center; color: #64748b; font-size: 14px; margin-top: 4px; }
+  .missed-item { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+  .m-face { font-weight: 600; font-size: 15px; }
+  .m-back { font-size: 14px; color: #475569; margin-top: 4px; }
+  #resultView h3, #missedList h3 { font-size: 15px; color: #334155; margin-top: 20px; }
+
+  /* 一覧 */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; align-items: center; }
+  .filters select {
+    padding: 9px 10px; border: 1px solid #7dd3fc; border-radius: 10px; background: #fff;
+    color: #0369a1; font-size: 14px;
+  }
+  .filters label { font-size: 14px; color: #334155; display: flex; gap: 5px; align-items: center; }
+  .list-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  @media (min-width: 640px) { .list-grid { grid-template-columns: 1fr 1fr; } }
+  .lcard { border: 1px solid #e0f2fe; border-radius: 12px; padding: 14px 16px; cursor: pointer; background: #fff; }
+  .lcard:hover { border-color: #7dd3fc; }
+  .l-meta { font-size: 12px; color: #0284c7; margin-bottom: 6px; }
+  .l-face { font-weight: 600; font-size: 15px; }
+  .l-back { margin-top: 10px; font-size: 14px; color: #334155; border-top: 1px dashed #bae6fd; padding-top: 10px; }
+  .l-core { color: #0284c7; font-size: 13px; margin-top: 4px; }
+  .l-hint { font-size: 11px; color: #94a3b8; margin-top: 8px; }
+  .back-link { display: inline-block; margin-top: 14px; color: #0284c7; font-size: 14px; cursor: pointer; background: none; border: none; padding: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>解法カード</h1>
+    <p>状況を見て、使う解法カードを選ぶ練習</p>
+  </header>
+
+  <!-- ホーム -->
+  <div id="homeView">
+    <div class="card-panel">
+      <div class="seg" role="radiogroup" aria-label="科目">
+        <label><input type="radio" name="subj" value="all" checked>全部</label>
+        <label><input type="radio" name="subj" value="math">数学</label>
+        <label><input type="radio" name="subj" value="phys">物理</label>
+      </div>
+      <button class="btn" onclick="startSession()">5分モードをはじめる（10問）</button>
+      <button class="btn sub" onclick="showList()">カード一覧を見る</button>
+      <div class="stats" id="homeStats"></div>
+    </div>
+  </div>
+
+  <!-- クイズ -->
+  <div id="quizView" style="display:none">
+    <div class="quiz-top">
+      <span class="qcount" id="qCount"></span>
+      <span class="timer" id="timer">0:00 / 5:00</span>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="qmeta" id="qMeta"></div>
+    <div class="qface" id="qFace"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback" style="display:none"></div>
+    <div class="actions">
+      <button class="btn" id="gradeBtn" onclick="grade()" disabled>決定</button>
+      <button class="btn" id="nextBtn" onclick="nextQuestion()" style="display:none">次の問題へ</button>
+      <button class="back-link" onclick="quitToHome()">やめてホームへ戻る</button>
+    </div>
+  </div>
+
+  <!-- 結果 -->
+  <div id="resultView" style="display:none">
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-time" id="resultTime"></div>
+    <div id="missedList"></div>
+    <div class="actions">
+      <button class="btn" onclick="quitToHome()">ホームへ戻る</button>
+      <button class="btn sub" onclick="showList()">カード一覧を見る</button>
+    </div>
+  </div>
+
+  <!-- 一覧 -->
+  <div id="listView" style="display:none">
+    <button class="back-link" onclick="quitToHome()">← ホームへ戻る</button>
+    <div class="filters">
+      <select id="fSubj" onchange="renderList()">
+        <option value="all">科目：すべて</option>
+        <option value="math">数学</option>
+        <option value="phys">物理</option>
+      </select>
+      <select id="fTheme" onchange="renderList()"></select>
+      <select id="fCore" onchange="renderList()"></select>
+      <label><input type="checkbox" id="fWeak" onchange="renderList()"> 苦手のみ</label>
+      <span class="qcount" id="listCount"></span>
+    </div>
+    <div class="list-grid" id="listGrid"></div>
+  </div>
+</div>
+<script>
+"use strict";
+const CARDS = [{"id":"math1-1","subj":"math","day":1,"theme":"微分の応用","face":"3次関数で「増減を調べよ」と来た","back":"まず微分して f′(x)=0 の x を出す。そこが山と谷の位置","core":"図と式","label":"まず微分して f′(x)=0 の x を出す"},{"id":"math1-2","subj":"math","day":1,"theme":"微分の応用","face":"方程式 f(x)=k の「実数解の個数を調べよ」","back":"y=k の水平線とグラフの交点の数に翻訳する。境界は極大値・極小値","core":"図と式","label":"y=k の水平線とグラフの交点の数に翻訳する"},{"id":"math1-3","subj":"math","day":1,"theme":"微分の応用","face":"「曲線外の点を通る接線」を求めたい","back":"接点を (t, f(t)) と置いてから接線を作り、通る点の条件を t の方程式にする","core":"前の結果を部品にする","label":"接点を (t, f(t)) と置いてから接線を作り…"},{"id":"math1-4","subj":"math","day":1,"theme":"微分の応用","face":"閉区間の最大・最小を聞かれた","back":"候補は「極値点と両端」だけ。全部代入して比べる","core":"境界で分ける","label":"候補は「極値点と両端」だけ"},{"id":"math1-5","subj":"math","day":1,"theme":"微分の応用","face":"パラメータで解の個数が変わる問題","back":"場合分けの境界は必ず極値。極値を先に固定してから a を動かす","core":"境界で分ける","label":"場合分けの境界は必ず極値"},{"id":"math1-6","subj":"math","day":1,"theme":"微分の応用","face":"接線の傾きが知りたい場面","back":"傾きはその点での微分係数 f′(a)。図の傾きと式が一致する","core":"図と式","label":"傾きはその点での微分係数 f′(a)"},{"id":"math1-7","subj":"math","day":1,"theme":"微分の応用","face":"「異なる3つの実数解」と書いてある","back":"極大値>k>極小値 の形に持ち込む合図。符号の積 (極大−k)(極小−k)<0 でも可","core":"図と式","label":"極大値>k>極小値 の形に持ち込む合図"},{"id":"math1-8","subj":"math","day":1,"theme":"微分の応用","face":"増減表を書くのが面倒な場面","back":"f′ の符号だけ分かればよい。f′ を因数分解して符号を区間ごとに読む","core":"形を揃える","label":"f′ の符号だけ分かればよい"},{"id":"phys1-1","subj":"phys","day":1,"theme":"力学・保存則の選択","face":"「なめらかな水平面で衝突」と書いてある","back":"衝突の前後で運動量保存。外力が仕事をしない一瞬の出来事として切り取る","core":"保存する量を探す","label":"衝突の前後で運動量保存"},{"id":"phys1-2","subj":"phys","day":1,"theme":"力学・保存則の選択","face":"「なめらかな斜面をのぼる／滑り降りる」","back":"力学的エネルギー保存。高さと速さを交換する","core":"保存する量を探す","label":"力学的エネルギー保存"},{"id":"phys1-3","subj":"phys","day":1,"theme":"力学・保存則の選択","face":"「完全弾性衝突（弾性衝突）」と明記","back":"運動量保存＋力学的エネルギー保存の2本立て。反発係数 e=1 でも同じ","core":"保存する量を探す","label":"運動量保存＋力学的エネルギー保存の2本立て"},{"id":"phys1-4","subj":"phys","day":1,"theme":"力学・保存則の選択","face":"「合体した」「くっついて一緒に動く」","back":"完全非弾性。運動量だけが保存し、エネルギーは減る。減った分は熱や変形に","core":"切り替わる瞬間で区切る","label":"完全非弾性"},{"id":"phys1-5","subj":"phys","day":1,"theme":"力学・保存則の選択","face":"粗い面で摩擦がある区間","back":"エネルギー保存は使えない。摩擦の仕事 = −(摩擦力)×(距離) を差し引く","core":"保存する量を探す","label":"エネルギー保存は使えない"},{"id":"phys1-6","subj":"phys","day":1,"theme":"力学・保存則の選択","face":"ばねが絡む運動","back":"弾性エネルギーを含めた力学的エネルギー保存。自然長の位置を基準に","core":"保存する量を探す","label":"弾性エネルギーを含めた力学的エネルギー保存"},{"id":"phys1-7","subj":"phys","day":1,"theme":"力学・保存則の選択","face":"衝突の「直前・直後」だけを聞かれる","back":"その一瞬だけを切り取って運動量保存。他の区間と混ぜない","core":"切り替わる瞬間で区切る","label":"その一瞬だけを切り取って運動量保存"},{"id":"phys1-8","subj":"phys","day":1,"theme":"力学・保存則の選択","face":"2物体が糸や棒でつながっている","back":"一体として運動量やエネルギーを考える。内力は相殺する","core":"保存する量を探す","label":"一体として運動量やエネルギーを考える"},{"id":"math2-1","subj":"math","day":2,"theme":"積分と面積","face":"2曲線で囲まれた面積を求めたい","back":"交点を求めて、その間で (上の式)−(下の式) を積分する","core":"境界で分ける","label":"交点を求めて、その間で (上の式)−(下の式) を積…"},{"id":"math2-2","subj":"math","day":2,"theme":"積分と面積","face":"x軸と曲線で囲まれた面積で、曲線が下に潜る区間がある","back":"符号をそのまま積分しない。区間を割って絶対値を取る","core":"境界で分ける","label":"符号をそのまま積分しない"},{"id":"math2-3","subj":"math","day":2,"theme":"積分と面積","face":"面積の公式 1/6 公式が使える場面","back":"放物線と直線で囲まれ、交点の x が α, β の時だけ。面積=(β−α)³/6","core":"形を揃える","label":"放物線と直線で囲まれ、交点の x が α, β の時…"},{"id":"math2-4","subj":"math","day":2,"theme":"積分と面積","face":"パラメータ入りの面積が○○に等しい、と来た","back":"面積をパラメータの式で表してから方程式を解く。面積は単調なことが多い","core":"前の結果を部品にする","label":"面積をパラメータの式で表してから方程式を解く"},{"id":"math2-5","subj":"math","day":2,"theme":"積分と面積","face":"y を x の関数で表しにくい曲線の面積","back":"x を y の関数として横に積分する（右−左）","core":"図と式を行き来する","label":"x を y の関数として横に積分する（右−左）"},{"id":"math2-6","subj":"math","day":2,"theme":"積分と面積","face":"偶関数・奇関数が対称な区間に出たら","back":"偶関数は半区間の2倍、奇関数は打ち消して 0。計算を半分にする","core":"形を揃える","label":"偶関数は半区間の2倍、奇関数は打ち消して 0"},{"id":"math2-7","subj":"math","day":2,"theme":"積分と面積","face":"面積が最小になる直線の傾きなどを聞かれた","back":"面積を傾きの関数として表し、微分して最小を探す。積分と微分の融合","core":"前の結果を部品にする","label":"面積を傾きの関数として表し、微分して最小を探す"},{"id":"math2-8","subj":"math","day":2,"theme":"積分と面積","face":"回転体の体積の前に面積が要る構成","back":"まず平面図形として面積を確定させてから回転させる。二段構え","core":"切って積む","label":"まず平面図形として面積を確定させてから回転させる"},{"id":"phys2-1","subj":"phys","day":2,"theme":"円運動と単振動","face":"等速円運動で力を聞かれた","back":"向心力 = m v²/r、向きは常に中心。新しい力ではなく合力の名前","core":"図と式を行き来する","label":"向心力 = m v²/r、向きは常に中心"},{"id":"phys2-2","subj":"phys","day":2,"theme":"円運動と単振動","face":"円運動の周期を聞かれた","back":"T=2πr/v。1周の距離 ÷ 速さ、で意味から作れる","core":"形を揃える","label":"T=2πr/v"},{"id":"phys2-3","subj":"phys","day":2,"theme":"円運動と単振動","face":"単振動の周期を聞かれた","back":"T=2π√(m/k)（ばね）または 2π√(l/g)（単振り子）。振幅には依存しない","core":"形を揃える","label":"T=2π√(m/k)（ばね）または 2π√(l/g)…"},{"id":"phys2-4","subj":"phys","day":2,"theme":"円運動と単振動","face":"単振動の最大速度・最大加速度","back":"v_max=Aω、a_max=Aω²。速さは中心で最大、加速度は端で最大","core":"境界で分ける","label":"v_max=Aω、a_max=Aω²"},{"id":"phys2-5","subj":"phys","day":2,"theme":"円運動と単振動","face":"鉛直ばねの単振動","back":"周期は水平ばねと同じ。つり合いの位置が中心になるだけ","core":"切り替わる瞬間で区切る","label":"周期は水平ばねと同じ"},{"id":"phys2-6","subj":"phys","day":2,"theme":"円運動と単振動","face":"円運動する物体の影の運動","back":"影は単振動。A=半径、ω は円運動の角速度と一致","core":"図と式を行き来する","label":"影は単振動"},{"id":"phys2-7","subj":"phys","day":2,"theme":"円運動と単振動","face":"糸がたるむ／面を離れる瞬間","back":"垂直抗力や張力が 0 になる条件で式を立てる。境界の瞬間が答えを決める","core":"切り替わる瞬間で区切る","label":"垂直抗力や張力が 0 になる条件で式を立てる"},{"id":"phys2-8","subj":"phys","day":2,"theme":"円運動と単振動","face":"単振動のエネルギーを聞かれた","back":"(1/2)kA² が全体で一定。位置エネルギーと運動エネルギーが交換する","core":"保存する量を探す","label":"(1/2)kA² が全体で一定"},{"id":"math3-1","subj":"math","day":3,"theme":"積分と体積","face":"回転体の体積を求めたい","back":"回転軸に垂直に切る。断面は円だから断面積は π×(半径)²、あとは積分","core":"切って積む","label":"回転軸に垂直に切る"},{"id":"math3-2","subj":"math","day":3,"theme":"積分と体積","face":"x軸の周りの回転","back":"半径は y そのもの。V=π∫y² dx","core":"切って積む","label":"半径は y そのもの"},{"id":"math3-3","subj":"math","day":3,"theme":"積分と体積","face":"y軸の周りの回転で詰まった","back":"方法は2つ：x を y で表して横向きの円盤にするか、円筒の殻を積む（バウムクーヘン）","core":"図と式を行き来する","label":"方法は2つ：x を y で表して横向きの円盤にするか…"},{"id":"math3-4","subj":"math","day":3,"theme":"積分と体積","face":"2曲線の間の領域を回転させる","back":"断面はドーナツ型（ワッシャー）。π×(外半径²−内半径²)","core":"切って積む","label":"断面はドーナツ型（ワッシャー）"},{"id":"math3-5","subj":"math","day":3,"theme":"積分と体積","face":"回転しない立体の体積（断面が正方形など）","back":"断面積 S(x) をそのまま ∫S(x)dx。回転でなくても同じ考え方","core":"切って積む","label":"断面積 S(x) をそのまま ∫S(x)dx"},{"id":"math3-6","subj":"math","day":3,"theme":"積分と体積","face":"直線 y=1 など軸がずれた回転","back":"半径は「軸からの距離」で測る。1−x² のように引き算で作る","core":"境界で分ける","label":"半径は「軸からの距離」で測る"},{"id":"math3-7","subj":"math","day":3,"theme":"積分と体積","face":"体積が π を含むか迷った","back":"回転体なら断面が円なので π が出る。断面が多角形なら π は出ない","core":"形を揃える","label":"回転体なら断面が円なので π が出る"},{"id":"math3-8","subj":"math","day":3,"theme":"積分と体積","face":"広義積分（無限まで回転）","back":"まず有限で積分してから極限を取る。体積が有限に収まることがある","core":"前の結果を部品にする","label":"まず有限で積分してから極限を取る"},{"id":"phys3-1","subj":"phys","day":3,"theme":"熱力学","face":"p−V グラフで仕事を聞かれた","back":"仕事はグラフと V 軸の間の面積。膨張なら＋、圧縮なら−","core":"グラフの面積と傾きを読む","label":"仕事はグラフと V 軸の間の面積"},{"id":"phys3-2","subj":"phys","day":3,"theme":"熱力学","face":"定積変化（V 一定）が出たら","back":"仕事は 0。内部エネルギーの変化がそのまま熱になる","core":"グラフの面積と傾きを読む","label":"仕事は 0"},{"id":"phys3-3","subj":"phys","day":3,"theme":"熱力学","face":"定圧変化の仕事","back":"W=pΔV。長方形の面積として読める","core":"グラフの面積と傾きを読む","label":"W=pΔV"},{"id":"phys3-4","subj":"phys","day":3,"theme":"熱力学","face":"サイクル（1周して戻る過程）","back":"正味の仕事はサイクルが囲む面積。時計回りなら正の仕事をする","core":"グラフの面積と傾きを読む","label":"正味の仕事はサイクルが囲む面積"},{"id":"phys3-5","subj":"phys","day":3,"theme":"熱力学","face":"温度の大小を比べたい","back":"pV の積が温度に比例（pV=nRT）。等温線は双曲線","core":"グラフの面積と傾きを読む","label":"pV の積が温度に比例（pV=nRT）"},{"id":"phys3-6","subj":"phys","day":3,"theme":"熱力学","face":"断熱変化が出たら","back":"Q=0。熱の出入りなしで内部エネルギーと仕事だけが交換する","core":"保存する量を探す","label":"Q=0"},{"id":"phys3-7","subj":"phys","day":3,"theme":"熱力学","face":"熱効率を聞かれた","back":"効率 = (正味の仕事)/(吸収した熱)。放出した熱は分母に入れない","core":"境界で分ける","label":"効率 = (正味の仕事)/(吸収した熱)"},{"id":"phys3-8","subj":"phys","day":3,"theme":"熱力学","face":"内部エネルギーの変化","back":"ΔU は経路によらず最初と最後の温度だけで決まる（状態量）","core":"保存する量を探す","label":"ΔU は経路によらず最初と最後の温度だけで決まる（状…"},{"id":"math4-1","subj":"math","day":4,"theme":"極限の融合","face":"漸化式 aₙ₊₁=f(aₙ) の極限を聞かれた","back":"まず α=f(α) を解いて極限候補を出し、aₙ−α が等比になる形に変形する","core":"形を揃える","label":"まず α=f(α) を解いて極限候補を出し…"},{"id":"math4-2","subj":"math","day":4,"theme":"極限の融合","face":"0/0 型で sin が混ざる極限","back":"sin x / x → 1 の形に寄せる。角度を揃えるのがコツ","core":"形を揃える","label":"sin x / x → 1 の形に寄せる"},{"id":"math4-3","subj":"math","day":4,"theme":"極限の融合","face":"(1+1/n)ⁿ の仲間の極限","back":"e の定義に寄せる。指数と底のずれを揃える","core":"形を揃える","label":"e の定義に寄せる"},{"id":"math4-4","subj":"math","day":4,"theme":"極限の融合","face":"和の極限 Σ が出てきた","back":"はさみうち（各項を端で押さえる）か、区分求積（(1/n)Σf(k/n)）のどちらかに寄せる","core":"形を揃える","label":"はさみうち（各項を端で押さえる）か…"},{"id":"math4-5","subj":"math","day":4,"theme":"極限の融合","face":"無限級数の和を聞かれた","back":"部分和を作る。等比なら公式、ズレる形なら差分に分解して相殺させる","core":"前の結果を部品にする","label":"部分和を作る"},{"id":"math4-6","subj":"math","day":4,"theme":"極限の融合","face":"ロピタルを使いたくなる場面","back":"高校範囲では使えない前提。有理化・因数分解・有名極限で処理する","core":"形を揃える","label":"高校範囲では使えない前提"},{"id":"math4-7","subj":"math","day":4,"theme":"極限の融合","face":"不定形 ∞−∞ が出たら","back":"通分か有理化で分数の形に変えてから考える","core":"形を揃える","label":"通分か有理化で分数の形に変えてから考える"},{"id":"math4-8","subj":"math","day":4,"theme":"極限の融合","face":"はさみうちの見つけ方","back":"一番大きい項と小さい項で全体を押さえる。n 個の和なら n×(最大) と n×(最小)","core":"境界で分ける","label":"一番大きい項と小さい項で全体を押さえる"},{"id":"phys4-1","subj":"phys","day":4,"theme":"電場と回路","face":"コンデンサーの基本式","back":"Q=CV。電荷・容量・電圧の3つは常にこの関係で結ばれる","core":"形を揃える","label":"Q=CV"},{"id":"phys4-2","subj":"phys","day":4,"theme":"電場と回路","face":"スイッチ切り替えでコンデンサーをつなぎ替えた","back":"孤立部分の総電荷が保存する。まず Q の合計を固定してから電圧を配分する","core":"保存する量を探す","label":"孤立部分の総電荷が保存する"},{"id":"phys4-3","subj":"phys","day":4,"theme":"電場と回路","face":"切り替え後の共通電位","back":"V=Q合計/(C合計)。並列接続として1つのコンデンサーに読み替える","core":"保存する量を探す","label":"V=Q合計/(C合計)"},{"id":"phys4-4","subj":"phys","day":4,"theme":"電場と回路","face":"コンデンサーのエネルギー","back":"U=(1/2)CV²=(1/2)QV=Q²/(2C)。場面で使いやすい形を選ぶ","core":"形を揃える","label":"U=(1/2)CV²=(1/2)QV=Q²/(2C)"},{"id":"phys4-5","subj":"phys","day":4,"theme":"電場と回路","face":"エネルギーが減った分の行き先","back":"抵抗で熱になる。電荷保存とエネルギー保存は別物だと意識する","core":"保存する量を探す","label":"抵抗で熱になる"},{"id":"phys4-6","subj":"phys","day":4,"theme":"電場と回路","face":"直列接続のコンデンサー","back":"電荷は共通、電圧が分かれる。合成容量は逆数の和の逆数","core":"形を揃える","label":"電荷は共通、電圧が分かれる"},{"id":"phys4-7","subj":"phys","day":4,"theme":"電場と回路","face":"キルヒホッフの法則を使う場面","back":"閉回路1周で電圧の合計が 0（電圧則）、分岐点で電流の合計が保存（電流則）","core":"保存する量を探す","label":"閉回路1周で電圧の合計が 0（電圧則）…"},{"id":"phys4-8","subj":"phys","day":4,"theme":"電場と回路","face":"極板間隔や面積を変えた","back":"C=εS/d で容量が変わる。電池接続中か切り離した後かで、固定される量が違う","core":"切り替わる瞬間で区切る","label":"C=εS/d で容量が変わる"},{"id":"math5-1","subj":"math","day":5,"theme":"複素数平面","face":"複素数の掛け算が出てきた","back":"絶対値は積、偏角は和。回転と拡大に分解して読む","core":"図と式を行き来する","label":"絶対値は積、偏角は和"},{"id":"math5-2","subj":"math","day":5,"theme":"複素数平面","face":"×i が現れた","back":"原点の周りの 90° 回転。そのまま座標を (a,b)→(−b,a) にしてもよい","core":"図と式を行き来する","label":"原点の周りの 90° 回転"},{"id":"math5-3","subj":"math","day":5,"theme":"複素数平面","face":"|z−α| の形を見た","back":"点 α からの距離。=r なら円、|z−α|=|z−β| なら垂直二等分線","core":"図と式を行き来する","label":"点 α からの距離"},{"id":"math5-4","subj":"math","day":5,"theme":"複素数平面","face":"正三角形・正方形の頂点を求めたい","back":"1辺のベクトルを ±60°（正方形なら 90°）回転して足す","core":"前の結果を部品にする","label":"1辺のベクトルを ±60°（正方形なら 90°）回転…"},{"id":"math5-5","subj":"math","day":5,"theme":"複素数平面","face":"z² の解を求めたい","back":"極形式で絶対値は √、偏角は半分。解は2つで、もう1つは符号反転","core":"形を揃える","label":"極形式で絶対値は √、偏角は半分"},{"id":"math5-6","subj":"math","day":5,"theme":"複素数平面","face":"共役 z̄ が出てきた","back":"実軸対称の点。z+z̄=2Re z、z·z̄=|z|² を使う","core":"形を揃える","label":"実軸対称の点"},{"id":"math5-7","subj":"math","day":5,"theme":"複素数平面","face":"回転の中心が原点でない回転","back":"中心を引いて原点中心に直し、回転してから戻す。平行移動の往復","core":"前の結果を部品にする","label":"中心を引いて原点中心に直し、回転してから戻す"},{"id":"math5-8","subj":"math","day":5,"theme":"複素数平面","face":"軌跡の問題（条件を満たす z の集合）","back":"z=x+yi と置いて実数の条件式に直すか、距離の言葉で読むかの二択","core":"図と式を行き来する","label":"z=x+yi と置いて実数の条件式に直すか…"},{"id":"phys5-1","subj":"phys","day":5,"theme":"磁場と電磁誘導","face":"磁場中で導体棒が動く","back":"起電力は V=BLv。磁場・長さ・速さの3つが全部垂直な時の形","core":"形を揃える","label":"起電力は V=BLv"},{"id":"phys5-2","subj":"phys","day":5,"theme":"磁場と電磁誘導","face":"コイルを貫く磁束が変わる","back":"起電力は −N(ΔΦ/Δt)。マイナスは「変化を妨げる向き」という宣言（レンツ）","core":"形を揃える","label":"起電力は −N(ΔΦ/Δt)"},{"id":"phys5-3","subj":"phys","day":5,"theme":"磁場と電磁誘導","face":"誘導電流の向きを聞かれた","back":"レンツの法則：変化を打ち消す向きに流れる。増えるなら反対向きの磁場を作る","core":"図と式を行き来する","label":"レンツの法則：変化を打ち消す向きに流れる"},{"id":"phys5-4","subj":"phys","day":5,"theme":"磁場と電磁誘導","face":"磁場中を動く荷電粒子","back":"ローレンツ力 qvB が向心力になり円運動。半径 r=mv/(qB)","core":"保存する量を探す","label":"ローレンツ力 qvB が向心力になり円運動"},{"id":"phys5-5","subj":"phys","day":5,"theme":"磁場と電磁誘導","face":"誘導電流が流れる時の力","back":"F=BIL。電流と磁場から受ける力で、運動を妨げる向きになる","core":"切り替わる瞬間で区切る","label":"F=BIL"},{"id":"phys5-6","subj":"phys","day":5,"theme":"磁場と電磁誘導","face":"エネルギーの帳尻を聞かれた","back":"外力がする仕事率 Fv と、電気的仕事率 VI が一致するはず。検算に使える","core":"保存する量を探す","label":"外力がする仕事率 Fv と…"},{"id":"phys5-7","subj":"phys","day":5,"theme":"磁場と電磁誘導","face":"磁束の定義","back":"Φ=BS（垂直な時）。傾いていれば Φ=BS cosθ","core":"形を揃える","label":"Φ=BS（垂直な時）"},{"id":"phys5-8","subj":"phys","day":5,"theme":"磁場と電磁誘導","face":"自己誘導・相互誘導が出たら","back":"電流の変化が起電力を作る。変化の速さ ΔI/Δt に比例する","core":"切り替わる瞬間で区切る","label":"電流の変化が起電力を作る"},{"id":"math6-1","subj":"math","day":6,"theme":"媒介変数と曲線","face":"x, y が t の式で与えられた","back":"dy/dx = (dy/dt)/(dx/dt)。y の微分 ÷ x の微分","core":"形を揃える","label":"dy/dx = (dy/dt)/(dx/dt)"},{"id":"math6-2","subj":"math","day":6,"theme":"媒介変数と曲線","face":"媒介変数のまま面積を求めたい","back":"∫y dx = ∫y(t)·x′(t) dt に直す。dx を t の式に替えるのが鍵","core":"切って積む","label":"∫y dx = ∫y(t)·x′(t) dt に直す"},{"id":"math6-3","subj":"math","day":6,"theme":"媒介変数と曲線","face":"弧長を求めたい","back":"L=∫√((x′)²+(y′)²) dt。速さの積分だと読む","core":"切って積む","label":"L=∫√((x′)²+(y′)²) dt"},{"id":"math6-4","subj":"math","day":6,"theme":"媒介変数と曲線","face":"接線の傾きが 0 になる点","back":"dy/dt=0 の t を探す（ただし dx/dt≠0）。山の頂点に対応","core":"境界で分ける","label":"dy/dt=0 の t を探す（ただし dx/dt≠…"},{"id":"math6-5","subj":"math","day":6,"theme":"媒介変数と曲線","face":"曲線の概形を描きたい","back":"x, y それぞれの増減表を t で作り、組み合わせて追う","core":"図と式を行き来する","label":"x, y それぞれの増減表を t で作り…"},{"id":"math6-6","subj":"math","day":6,"theme":"媒介変数と曲線","face":"t を消去して x, y の式にしたい場面","back":"三角なら sin²+cos²=1 のような恒等式で消す。消せない曲線も多い","core":"形を揃える","label":"三角なら sin²+cos²=1 のような恒等式で消…"},{"id":"math6-7","subj":"math","day":6,"theme":"媒介変数と曲線","face":"回転体の体積も t のまま","back":"V=π∫y² dx = π∫y(t)²x′(t) dt。置き換えは同じ","core":"切って積む","label":"V=π∫y² dx = π∫y(t)²x′(t) d…"},{"id":"math6-8","subj":"math","day":6,"theme":"媒介変数と曲線","face":"速度ベクトル・速さ（物理との接続）","back":"速さは √((x′)²+(y′)²)。数学の弧長の要素と物理の速さは同じ量","core":"前の結果を部品にする","label":"速さは √((x′)²+(y′)²)"},{"id":"phys6-1","subj":"phys","day":6,"theme":"波動","face":"干渉の明線条件を聞かれた","back":"経路差 = mλ（m=0,1,2…）で強め合う。暗線は (m+1/2)λ","core":"形を揃える","label":"経路差 = mλ（m=0,1,2…）で強め合う"},{"id":"phys6-2","subj":"phys","day":6,"theme":"波動","face":"ヤングの実験の明線間隔","back":"Δx=λL/d。波長が長い・スクリーンが遠い・スリットが狭いほど広がる","core":"形を揃える","label":"Δx=λL/d"},{"id":"phys6-3","subj":"phys","day":6,"theme":"波動","face":"音源が近づいてくるドップラー","back":"聞こえる波長が短くなる。f′=V/(V−v_s)·f（観測者静止）","core":"境界で分ける","label":"聞こえる波長が短くなる"},{"id":"phys6-4","subj":"phys","day":6,"theme":"波動","face":"観測者も動くドップラー","back":"分子は観測者の動き (V∓v_o)、分母は音源の動き (V∓v_s)。別々に処理する","core":"境界で分ける","label":"分子は観測者の動き (V∓v_o)…"},{"id":"phys6-5","subj":"phys","day":6,"theme":"波動","face":"回折格子の明線","back":"d sinθ=mλ。次数 m には上限があり、|sinθ|≦1 から決まる","core":"境界で分ける","label":"d sinθ=mλ"},{"id":"phys6-6","subj":"phys","day":6,"theme":"波動","face":"うなりを聞かれた","back":"うなりの振動数は2つの振動数の差 |f₁−f₂|","core":"形を揃える","label":"うなりの振動数は2つの振動数の差 |f₁−f₂|"},{"id":"phys6-7","subj":"phys","day":6,"theme":"波動","face":"弦や管の固有振動","back":"両端固定の弦は L=(m/2)λ、開管はその倍音列、閉管は奇数倍のみ","core":"形を揃える","label":"両端固定の弦は L=(m/2)λ、開管はその倍音列…"},{"id":"phys6-8","subj":"phys","day":6,"theme":"波動","face":"波の重ね合わせの原理","back":"合成波は足し算。干渉も定常波もこの原理の応用","core":"前の結果を部品にする","label":"合成波は足し算"},{"id":"math7-1","subj":"math","day":7,"theme":"総合（卒業試験）","face":"指数×多項式の関数を見た","back":"微分すると同型が残る。e^{−x} は微分しても形が崩れない","core":"形を揃える","label":"微分すると同型が残る"},{"id":"math7-2","subj":"math","day":7,"theme":"総合（卒業試験）","face":"∫x e^{−x} 型の積分","back":"部分積分で多項式の次数を1つ下げる。繰り返せば漸化式になる","core":"前の結果を部品にする","label":"部分積分で多項式の次数を1つ下げる"},{"id":"math7-3","subj":"math","day":7,"theme":"総合（卒業試験）","face":"x→∞ での x と eˣ の競争","back":"指数関数の増大が圧倒的。xⁿ e^{−x}→0 は暗記級の事実","core":"形を揃える","label":"指数関数の増大が圧倒的"},{"id":"math7-4","subj":"math","day":7,"theme":"総合（卒業試験）","face":"広義積分の回転体","back":"有限区間で計算してから端を飛ばす。収束するなら値が残る","core":"前の結果を部品にする","label":"有限区間で計算してから端を飛ばす"},{"id":"math7-5","subj":"math","day":7,"theme":"総合（卒業試験）","face":"Iₙ の漸化式を作りたい","back":"Iₙ を部分積分して Iₙ₋₁ を登場させる。部品化の王道","core":"前の結果を部品にする","label":"Iₙ を部分積分して Iₙ₋₁ を登場させる"},{"id":"math7-6","subj":"math","day":7,"theme":"総合（卒業試験）","face":"最大値問題で指数が絡む","back":"対数を取って微分してもよい（対数微分）。単調性は変わらない","core":"形を揃える","label":"対数を取って微分してもよい（対数微分）"},{"id":"math7-7","subj":"math","day":7,"theme":"総合（卒業試験）","face":"接線と曲線で囲まれた面積","back":"接線の式を作る→差を積分する。Day1 と Day2 の合体技","core":"前の結果を部品にする","label":"接線の式を作る→差を積分する"},{"id":"math7-8","subj":"math","day":7,"theme":"総合（卒業試験）","face":"不等式の証明に微分を使う","back":"差を f(x) と置き、増減を調べて最小値が 0 以上を示す","core":"図と式を行き来する","label":"差を f(x) と置き、増減を調べて最小値が 0 以…"},{"id":"phys7-1","subj":"phys","day":7,"theme":"総合（卒業試験）","face":"荷電粒子が電圧 V で加速された","back":"qV = (1/2)mv²。エネルギーの保存だけで速さが出る","core":"保存する量を探す","label":"qV = (1/2)mv²"},{"id":"phys7-2","subj":"phys","day":7,"theme":"総合（卒業試験）","face":"加速後のエネルギーの単位","back":"qV をそのまま eV で読む。200V なら 200 eV","core":"形を揃える","label":"qV をそのまま eV で読む"},{"id":"phys7-3","subj":"phys","day":7,"theme":"総合（卒業試験）","face":"磁場に垂直に入射した荷電粒子","back":"ローレンツ力が向心力。r=mv/(qB)、周期は速さに依らない","core":"保存する量を探す","label":"ローレンツ力が向心力"},{"id":"phys7-4","subj":"phys","day":7,"theme":"総合（卒業試験）","face":"半円を描いて出てくる時間","back":"半周期 πm/(qB)。半径が要らないのがミソ","core":"前の結果を部品にする","label":"半周期 πm/(qB)"},{"id":"phys7-5","subj":"phys","day":7,"theme":"総合（卒業試験）","face":"電場と磁場を直交させて重ねた","back":"qE=qvB の時だけ直進する（速度選別器）。v=E/B が条件","core":"境界で分ける","label":"qE=qvB の時だけ直進する（速度選別器）"},{"id":"phys7-6","subj":"phys","day":7,"theme":"総合（卒業試験）","face":"磁場は仕事をしない","back":"ローレンツ力は速度と常に垂直。速さは変わらず向きだけ変わる","core":"保存する量を探す","label":"ローレンツ力は速度と常に垂直"},{"id":"phys7-7","subj":"phys","day":7,"theme":"総合（卒業試験）","face":"サイクロトロンの発想","back":"磁場で回しながら電場で少しずつ加速する。周期一定だから同期できる","core":"前の結果を部品にする","label":"磁場で回しながら電場で少しずつ加速する"},{"id":"phys7-8","subj":"phys","day":7,"theme":"総合（卒業試験）","face":"質量分析器の原理","back":"同じ速さでも r が m/q で変わる。軌道で質量を選り分ける","core":"図と式を行き来する","label":"同じ速さでも r が m/q で変わる"}];
+/* 解法カード — 5分モード＋一覧モード。データは CARDS（元サイトのDAYSから機械抽出） */
+const LS_KEY = "kaihou-cards-v1";
+const SUBJ_NAME = { math: "数学", phys: "物理" };
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+    return { weak: Array.isArray(s.weak) ? s.weak : [], stats: s.stats || {} };
+  } catch (e) { return { weak: [], stats: {} }; }
+}
+function saveState() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
+let state = loadState();
+
+const byId = {};
+CARDS.forEach(c => { byId[c.id] = c; });
+/* 同じセット（科目×日）のカード群と、正解集合（自分＋同じセットで同じ芯のカード）を機械的に決める */
+function setOf(card) { return CARDS.filter(c => c.subj === card.subj && c.day === card.day); }
+function correctIds(card) {
+  return setOf(card).filter(c => c.id === card.id || c.core === card.core).map(c => c.id);
+}
+
+function shuffle(a) {
+  const r = a.slice();
+  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = r[i]; r[i] = r[j]; r[j] = t; }
+  return r;
+}
+function fmtTime(sec) { const m = Math.floor(sec / 60), s = sec % 60; return m + ":" + String(s).padStart(2, "0"); }
+function esc(t) { return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+/* ============ 5分モード ============ */
+let session = null;
+function pickSession(subj) {
+  const pool = CARDS.filter(c => subj === "all" || c.subj === subj);
+  const weak = shuffle(pool.filter(c => state.weak.includes(c.id)));
+  const rest = shuffle(pool.filter(c => !state.weak.includes(c.id)));
+  return weak.concat(rest).slice(0, 10);
+}
+function startSession() {
+  const subj = document.querySelector("input[name=subj]:checked").value;
+  const qs = pickSession(subj);
+  session = { qs: qs, idx: 0, correct: 0, missed: [], startAt: Date.now(), timer: null, selected: new Set(), graded: false };
+  document.getElementById("homeView").style.display = "none";
+  document.getElementById("listView").style.display = "none";
+  document.getElementById("quizView").style.display = "";
+  document.getElementById("resultView").style.display = "none";
+  session.timer = setInterval(tickTimer, 500);
+  tickTimer();
+  renderQuestion();
+}
+function tickTimer() {
+  if (!session) return;
+  const el = Math.floor((Date.now() - session.startAt) / 1000);
+  const t = document.getElementById("timer");
+  t.textContent = fmtTime(el) + " / 5:00";
+  t.classList.toggle("over", el > 300);
+}
+function currentCard() { return session.qs[session.idx]; }
+function renderQuestion() {
+  const card = currentCard();
+  const corr = correctIds(card);
+  session.correctSet = new Set(corr);
+  session.selected = new Set();
+  session.graded = false;
+  document.getElementById("qMeta").innerHTML =
+    '<span class="chip">' + esc(SUBJ_NAME[card.subj]) + " Day" + card.day + "：" + esc(card.theme) + "</span>" +
+    (corr.length > 1 ? '<span class="chip chip-blue">複数選択（当てはまるものを全部）</span>' : '<span class="chip chip-blue">1枚選択</span>') +
+    (state.weak.includes(card.id) ? '<span class="chip chip-weak">苦手プール</span>' : "");
+  document.getElementById("qFace").textContent = card.face;
+  document.getElementById("qCount").textContent = (session.idx + 1) + " / " + session.qs.length + "問";
+  document.getElementById("dots").innerHTML = session.qs.map(function (_, i) {
+    return '<span class="dot' + (i < session.idx ? " done" : (i === session.idx ? " now" : "")) + '"></span>';
+  }).join("");
+  const opts = shuffle(setOf(card));
+  document.getElementById("options").innerHTML = opts.map(function (c) {
+    return '<button type="button" class="opt" data-id="' + c.id + '" onclick="toggleOpt(this)">' + esc(c.label) + "</button>";
+  }).join("");
+  document.getElementById("feedback").style.display = "none";
+  document.getElementById("gradeBtn").style.display = "";
+  document.getElementById("gradeBtn").disabled = true;
+  document.getElementById("nextBtn").style.display = "none";
+}
+function toggleOpt(btn) {
+  if (!session || session.graded) return;
+  const id = btn.getAttribute("data-id");
+  if (session.selected.has(id)) { session.selected.delete(id); btn.classList.remove("sel"); }
+  else { session.selected.add(id); btn.classList.add("sel"); }
+  document.getElementById("gradeBtn").disabled = session.selected.size === 0;
+}
+function grade() {
+  if (!session || session.graded || session.selected.size === 0) return;
+  session.graded = true;
+  const card = currentCard();
+  const corr = session.correctSet, sel = session.selected;
+  let exact = sel.size === corr.size;
+  if (exact) { corr.forEach(id => { if (!sel.has(id)) exact = false; }); }
+  document.querySelectorAll("#options .opt").forEach(function (btn) {
+    const id = btn.getAttribute("data-id");
+    const isC = corr.has(id), isS = sel.has(id);
+    btn.disabled = true;
+    if (isC && isS) btn.classList.add("hit");
+    else if (!isC && isS) btn.classList.add("wrongpick");
+    else if (isC && !isS) btn.classList.add("missed");
+    if (isC) { const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "正解"; btn.appendChild(tag); }
+  });
+  const st = state.stats[card.id] || { seen: 0, ok: 0 };
+  st.seen++;
+  if (exact) {
+    st.ok++;
+    session.correct++;
+    state.weak = state.weak.filter(id => id !== card.id);
+  } else {
+    session.missed.push(card);
+    if (!state.weak.includes(card.id)) state.weak.push(card.id);
+  }
+  state.stats[card.id] = st;
+  saveState();
+  const fb = document.getElementById("feedback");
+  const correctLabels = [...corr].map(id => byId[id].label);
+  fb.className = "feedback " + (exact ? "ok" : "ng");
+  fb.innerHTML =
+    "<strong>" + (exact ? "正解！" : (sel.size && [...sel].some(id => corr.has(id)) ? "部分正解（あと少し）" : "不正解")) + "</strong>" +
+    '<div class="fb-back">' + esc(card.back) + "</div>" +
+    '<div class="fb-core">芯：<b>' + esc(card.core) + "</b>" +
+    (corr.size > 1 ? " ― この状況では、同じ芯「" + esc(card.core) + "」のカードも正解です" : "") + "</div>" +
+    '<div class="fb-list">正解のカード：' + correctLabels.map(esc).join(" ／ ") + "</div>";
+  fb.style.display = "";
+  document.getElementById("gradeBtn").style.display = "none";
+  const nb = document.getElementById("nextBtn");
+  nb.textContent = session.idx + 1 >= session.qs.length ? "結果を見る" : "次の問題へ";
+  nb.style.display = "";
+}
+function nextQuestion() {
+  session.idx++;
+  if (session.idx >= session.qs.length) { showResult(); return; }
+  renderQuestion();
+}
+function showResult() {
+  clearInterval(session.timer);
+  const elapsed = Math.floor((Date.now() - session.startAt) / 1000);
+  document.getElementById("quizView").style.display = "none";
+  const rv = document.getElementById("resultView");
+  rv.style.display = "";
+  document.getElementById("resultScore").textContent = session.correct + " / " + session.qs.length + " 正解";
+  document.getElementById("resultTime").textContent = "かかった時間 " + fmtTime(elapsed) + "（目安5分）";
+  const ml = document.getElementById("missedList");
+  if (session.missed.length === 0) {
+    ml.innerHTML = '<p class="muted">間違えたカードはありませんでした。</p>';
+  } else {
+    ml.innerHTML = "<h3>間違えたカード（苦手プール入り）</h3>" + session.missed.map(function (c) {
+      return '<div class="missed-item"><div class="m-face">' + esc(c.face) + '</div><div class="m-back">' + esc(c.back) + "（芯：" + esc(c.core) + "）</div></div>";
+    }).join("");
+  }
+  session = null;
+}
+function quitToHome() {
+  if (session && session.timer) clearInterval(session.timer);
+  session = null;
+  document.getElementById("quizView").style.display = "none";
+  document.getElementById("resultView").style.display = "none";
+  document.getElementById("listView").style.display = "none";
+  document.getElementById("homeView").style.display = "";
+  renderHomeStats();
+}
+function renderHomeStats() {
+  const el = document.getElementById("homeStats");
+  const seen = Object.keys(state.stats).length;
+  el.textContent = "苦手プール " + state.weak.length + "枚 ／ これまで出題 " + seen + "枚（全" + CARDS.length + "枚）";
+}
+
+/* ============ 一覧モード ============ */
+function showList() {
+  if (session && session.timer) clearInterval(session.timer);
+  session = null;
+  document.getElementById("homeView").style.display = "none";
+  document.getElementById("quizView").style.display = "none";
+  document.getElementById("resultView").style.display = "none";
+  document.getElementById("listView").style.display = "";
+  renderList();
+}
+function fillFilters() {
+  const subj = document.getElementById("fSubj").value;
+  const themeSel = document.getElementById("fTheme");
+  const coreSel = document.getElementById("fCore");
+  const themes = [...new Set(CARDS.filter(c => subj === "all" || c.subj === subj).map(c => c.theme))];
+  const cores = [...new Set(CARDS.map(c => c.core))];
+  const curT = themeSel.value, curC = coreSel.value;
+  themeSel.innerHTML = '<option value="all">分野：すべて</option>' + themes.map(t => '<option value="' + esc(t) + '">' + esc(t) + "</option>").join("");
+  coreSel.innerHTML = '<option value="all">芯：すべて</option>' + cores.map(t => '<option value="' + esc(t) + '">' + esc(t) + "</option>").join("");
+  if (themes.includes(curT)) themeSel.value = curT;
+  if (cores.includes(curC)) coreSel.value = curC;
+}
+function renderList() {
+  fillFilters();
+  const subj = document.getElementById("fSubj").value;
+  const theme = document.getElementById("fTheme").value;
+  const core = document.getElementById("fCore").value;
+  const weakOnly = document.getElementById("fWeak").checked;
+  const list = CARDS.filter(c =>
+    (subj === "all" || c.subj === subj) &&
+    (theme === "all" || c.theme === theme) &&
+    (core === "all" || c.core === core) &&
+    (!weakOnly || state.weak.includes(c.id)));
+  document.getElementById("listCount").textContent = list.length + "枚";
+  document.getElementById("listGrid").innerHTML = list.map(function (c) {
+    return '<div class="lcard" data-id="' + c.id + '" onclick="flipCard(this)">' +
+      '<div class="l-meta">' + esc(SUBJ_NAME[c.subj]) + " Day" + c.day + "：" + esc(c.theme) +
+      (state.weak.includes(c.id) ? ' <span class="chip chip-weak">苦手</span>' : "") + "</div>" +
+      '<div class="l-face">' + esc(c.face) + "</div>" +
+      '<div class="l-back" style="display:none">' + esc(c.back) + '<div class="l-core">芯：' + esc(c.core) + "</div></div>" +
+      '<div class="l-hint">タップで解法を表示／隠す</div></div>';
+  }).join("") || '<p class="muted">該当するカードがありません。</p>';
+}
+function flipCard(el) {
+  const b = el.querySelector(".l-back");
+  b.style.display = b.style.display === "none" ? "" : "none";
+}
+
+renderHomeStats();
+
+</script>
+</body>
+</html>
